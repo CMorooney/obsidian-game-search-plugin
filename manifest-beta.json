@@ -1,9 +1,9 @@
 {
-	"id": "game-search",
-	"name": "Game Search",
+	"id": "igdb-game-searcher",
+	"name": "IGDB Game Searcher",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Helps you find Games and create notes.",
+	"description": "Search for games using IGDB and create notes. Optional Steam Library Sync.",
 	"author": "Calving forked from anpigon",
 	"authorUrl": "https://github.com/CMorooney/obsidian-game-search-plugin",
 	"isDesktopOnly": false

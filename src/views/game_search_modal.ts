@@ -1,17 +1,17 @@
 import { ButtonComponent, Modal, Setting, TextComponent, Notice } from 'obsidian';
-import { RAWGAPI } from '@src/apis/rawg_games_api';
-import { RAWGGameFromSearch } from '@models/rawg_game.model';
-import GameSearchPlugin from '@src/main';
+import { IGDBAPI } from '@src/apis/igdb_games_api';
+import { IGDBGameFromSearch } from '@models/igdb_game.model';
+import IGDBGameSearcherPlugin from '@src/main';
 
-export class GameSearchModal extends Modal {
+export class IGDBGameSearcherSearchModal extends Modal {
   private isBusy = false;
   private okBtnRef?: ButtonComponent;
 
   constructor(
-    plugin: GameSearchPlugin,
-    private api: RAWGAPI,
+    plugin: IGDBGameSearcherPlugin,
+    private api: IGDBAPI,
     private query: string,
-    private callback: (error: Error | null, result?: RAWGGameFromSearch[]) => void,
+    private callback: (error: Error | null, result?: IGDBGameFromSearch[]) => void,
   ) {
     super(plugin.app);
   }
@@ -57,7 +57,7 @@ export class GameSearchModal extends Modal {
 
     contentEl.createEl('h2', { text: 'Search Game' });
 
-    contentEl.createDiv({ cls: 'game-search-plugin__search-modal--input' }, settingItem => {
+    contentEl.createDiv({ cls: 'igdb-game-searcher__search-modal--input' }, settingItem => {
       new TextComponent(settingItem)
         .setValue(this.query)
         .setPlaceholder('Search by title')

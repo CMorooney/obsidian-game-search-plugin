@@ -1,200 +1,173 @@
-# Obsidian Game Search Plugin
+# IGDB Game Searcher
 
 - [How to Install](#how-to-install)
 - [Basic Usage](#basic-usage)
 - [Steam Sync](#steam-sync)
 - [Templating](#templating)
   - [Example Template](#example-template)
-  - [Template Variable Definitions](#template-variables-definitions)
+  - [Template Variables](#template-variables)
+  - [Inline Scripts](#inline-scripts)
   - [Regenerating File Metadata](#regenerating-file-metadata)
-
-## Forked From
-
-https://github.com/anpigon/obsidian-book-search-plugin/
 
 ## Description
 
-Use to query game using a game title (uses RAWG Game API to get the game information.)
+Search for games by title and automatically create notes with metadata fetched from the [IGDB API](https://api-docs.igdb.com/). Optionally sync your Steam library and wishlist.
 
 ## How to Install
 
-Click the link to install the Game Search plugin: [Install Link](https://github.com/CMorooney/obsidian-game-search-plugin)
-Or, search 'Game Search' in the Obsidian Community plugin directory
-and install it from there.
+Search **IGDB Game Searcher** in the Obsidian Community plugin directory and install from there.
+
+Or use this direct install link: [Install Link](https://github.com/CMorooney/obsidian-game-search-plugin)
 
 ## Basic Usage
 
-1. Acquire an API key from [RAWG](https://rawg.io/apidocs)
-2. Enter your RAWG API key into the Game Search plugin settings
-3. Select a location for your game notes to be created
-4. Enter a file name format
-5. Select a file to use as a note template
-6. Use the command `Create New Game Note` to search for a game
-7. Select a game from the search results
-8. Your note has been created :]
+1. Create a Twitch Developer application at [dev.twitch.tv](https://dev.twitch.tv/console/apps) to get a **Client ID** and **Client Secret** (IGDB is owned by Twitch)
+2. Enter both credentials in the Game Search plugin settings
+3. Use the **Test Connection** button to verify your credentials
+4. Select a folder for your game notes
+5. Set a file name format (e.g. `{{name}} ({{release_year}})`)
+6. Select a template file
+7. Run the command **Create new game note**, search for a game, and pick from results
 
 ## Steam Sync
 
-Optionally, you can auto-sync your Steam Library and Wishlist.
+Optionally sync your Steam library and wishlist to automatically create or update game notes.
 
-1. Acquire an API key from [Steam](https://steamcommunity.com/dev)
-2. Make note of your user SteamId
-   (navigate to your profile on the web and check the URL)
-3. Enter your Steam API key and Id into the Game Search plugin settings
-4. Ensure your Steam Privacy Settings have your wishlist set to `Public`
-   if you wish to sync wishlist items
-5. (Optional) provide metadata to be injected into
-    wishlisted and/or owned games
-   - For example, I add `status: backlog` to wishlist games and
-     `owned_platform: steam` to owned games
-6. Use command `Sync Steam` to begin a sync.
-   - This is not speedy, especially with larger libraries.
-     There is a progress bar to provide some feedback but just...heads up
-7. **NOTE**: Synced Steam games will automatically have a `steamId`
-   metadata property added. Don't remove this.
+1. Acquire a Steam Web API key from [steamcommunity.com/dev](https://steamcommunity.com/dev)
+2. Find your Steam user ID (navigate to your profile in a browser and check the URL)
+3. Enter your Steam API key and user ID in the plugin settings
+4. Ensure your Steam Privacy Settings have your **Wishlist** set to `Public` if you want to sync it
+5. (Optional) define metadata key/value pairs to inject into owned or wishlisted games — e.g. `status: backlog` for wishlist, `owned_platform: steam` for owned games
+6. Run the command **Sync Steam** — this may take a while for large libraries; a progress bar is shown
+7. **Important**: synced notes will have `steamId`, `steamPlaytimeForever`, and `steamPlaytime2Weeks` metadata added automatically. Do not remove `steamId` from notes you want to keep synced.
+
+The Steam sync uses the IGDB `external_games` endpoint for precise matching by Steam App ID, falling back to fuzzy name matching when a direct match isn't found.
 
 ## Templating
 
-It is recommended to pair this plugin with [Templater](https://github.com/SilentVoid13/Templater)
-so that you can auto-generate content for your game notes.
+It is recommended to pair this plugin with [Templater](https://github.com/SilentVoid13/Templater) to auto-generate content for your notes.
 
 ### Example Template
 
-The following is an example template.
-
-Note that including data from lists or
-complex objects may require templater to extract what you want
-(e.g `genres`, `platforms`, `stores`, `publishers`, `developers` in example template)
-
-A complete list of template variables provided by the plugin
-can be found under [Template Variable Definitions](#template-variables-definitions).
-
-```YAML
+```markdown
 ---
-tag: Game 🎮 
-id: {{id}}
-genres: <%= {{genres}}.map(g => `${g.name}`) %>
-platforms: <%= {{platforms}}.map(p => `${p.platform.name}`) %>
-release_date: {{released}}
-background_image: {{background_image}}
-metacritic_score: {{metacritic}}
-stores: <%= {{stores}}.map(n => `${n.store.name}`) %>
-publishers: <%= {{publishers}}.map(p => `${p.name}`) %>
-developers: <%= {{developers}}.map(d => `${d.name}`) %>
+tags: game
+status:
+  - wishlist
+format:
+  - digital
+owned_platform:
+  - pc
+id: "{{id}}"
+name: "{{name}}"
+igdb_url: "{{url}}"
+release_date: "{{release_date}}"
+cover_url: "{{cover_url}}"
+rating: "{{rating}}"
+aggregated_rating: "{{aggregated_rating}}"
+steam_url: "{{steam_url}}"
+website: "{{website}}"
+genres:
+<%= game.genres?.filter(g => typeof g === 'object' && g.name).map(g => `  - "${g.name}"`).join('\n') ?? '' %>
+platforms:
+<%= game.platforms?.filter(p => typeof p === 'object' && p.name).map(p => `  - "${p.name}"`).join('\n') ?? '' %>
+developers:
+<%= game.involved_companies?.filter(c => c.developer && c.company?.name).map(c => `  - "${c.company.name}"`).join('\n') ?? '' %>
+publishers:
+<%= game.involved_companies?.filter(c => c.publisher && c.company?.name).map(c => `  - "${c.company.name}"`).join('\n') ?? '' %>
+game_modes:
+<%= game.game_modes?.filter(m => typeof m === 'object' && m.name).map(m => `  - "${m.name}"`).join('\n') ?? '' %>
+themes:
+<%= game.themes?.filter(t => typeof t === 'object' && t.name).map(t => `  - "${t.name}"`).join('\n') ?? '' %>
+purchased: false
+purchased_at:
+purchased_on:
+purchased_price:
+completed_at:
 ---
-![{{name}}]({{background_image}})
+![cover|300]({{cover_url}})
+
+## Summary
+{{summary}}
+
+## Notes
 ```
 
-## Regenerating File Metadata
+### Template Variables
 
-Acknowledging that you may adjust your template after adding many many games,
-the plugin provides a button **within the settings panel** to regenerate all of
-your game note metadata.
+Simple string variables can be used with `{{variable_name}}` syntax directly in your template.
 
-**Previous versions** of this plugin this button would _completely_ regenerate
-the files, and you would lose any non-templated content in them.
+| Variable             | Type   | Description                                              |
+| -------------------- | ------ | -------------------------------------------------------- |
+| `id`                 | number | IGDB game ID                                             |
+| `slug`               | string | IGDB game slug                                           |
+| `name`               | string | Game title                                               |
+| `release_date`       | string | Release date as `YYYY-MM-DD`                             |
+| `release_year`       | string | Release year as `YYYY`                                   |
+| `cover_url`          | string | Cover image URL (`https://`, `t_cover_big` size)         |
+| `summary`            | string | Short description of the game                            |
+| `storyline`          | string | Longer narrative description                             |
+| `rating`             | string | IGDB community rating (0–100, 1 decimal place)           |
+| `aggregated_rating`  | string | External critics aggregate rating (0–100, 1 decimal)     |
+| `genres`             | string | Comma-separated genre names (e.g. `Shooter, Action`)     |
+| `platforms`          | string | Comma-separated platform names                           |
+| `themes`             | string | Comma-separated theme names                              |
+| `game_modes`         | string | Comma-separated game mode names                          |
+| `developers`         | string | Comma-separated developer company names                  |
+| `publishers`         | string | Comma-separated publisher company names                  |
+| `url`                | string | IGDB game page URL                                       |
+| `website`            | string | Official game website URL (if available)                 |
+| `steam_url`          | string | Steam store page URL (if available)                      |
 
-**As of v0.2.0** this feature only replaces the metadata of your game files with
-regenerated metadata from the template. The motivation behind this is that it
-is likely that the body of a game note is used for keepsake/TODO lists/personal notes,
-while the main portion of the templating will happen in the metadata. I'm open to
-revisiting this if it proves to be a bad idea.
+### Inline Scripts
 
-**Note**: `steamId`, `steamPlaytimeForever`, `steamPlaytime2Weeks`, and any user-provided
-metadata to be injected into Steam games (added via settings) will be preserved.
+For richer output (e.g. YAML lists), use the `<%= script %>` syntax to run JavaScript against the raw `game` object (`IGDBGame`).
 
-## Other Settings
+**Genres as a list:**
+```
+genres:
+<%= game.genres?.filter(g => typeof g === 'object' && g.name).map(g => `  - "${g.name}"`).join('\n') ?? '' %>
+```
 
-### New file location
+**Platforms as a list:**
+```
+platforms:
+<%= game.platforms?.filter(p => typeof p === 'object' && p.name).map(p => `  - "${p.name}"`).join('\n') ?? '' %>
+```
 
-Set the folder location where the new file is created.
-Otherwise, a new file is created in the Obsidian root folder.
+**Developers / Publishers (from `involved_companies`):**
+```
+developers:
+<%= game.involved_companies?.filter(c => c.developer && c.company?.name).map(c => `  - "${c.company.name}"`).join('\n') ?? '' %>
 
-### New file name
+publishers:
+<%= game.involved_companies?.filter(c => c.publisher && c.company?.name).map(c => `  - "${c.company.name}"`).join('\n') ?? '' %>
+```
 
-You can set the file name format. The default format is `{{name}} - {{published}}`.
-You can use `{{DATE}}` or `{{DATE:YYYYMMDD}}` to set a unique file name.
+> **Tip**: always use optional chaining (`?.`) and a `?? ''` fallback — IGDB may omit fields for less-documented games.
 
-If you are using the Steam integration portion of the plugin you can also
-flip a toggle in settings to try and immediately match any created game notes
-with a game in your Steam library to so that steam metadata gets immediately injected.
-*THIS WILL ONLY MATCH GAMES IN YOUR LIBRARY ALREADY*
+### Regenerating File Metadata
 
-### Template variables definitions
+The plugin provides a **Regen** button in the settings panel (under *Advanced/Dangerous*) to regenerate metadata for all notes in your configured folder.
 
-The following table lists and describes each variable that can be used in your template.
-To use a simple string variable in your template, simply write the variable name
-surrounded by curly braces (e.g, `{{name}}`).
+- Only the frontmatter (metadata block between `---`) is replaced; the body of the note is preserved
+- The plugin looks for `id`, `slug`, or `name` frontmatter fields to re-query IGDB. As a last resort it uses the filename
+- `steamId`, `steamPlaytimeForever`, `steamPlaytime2Weeks`, and any Steam metadata defined in settings are preserved through regeneration
 
-| Name                 | Description                                                   |
-| -------------------- | ------------------------------------------------------------- |
-| id                   | (number) RAWG database ID                                     |
-| slug                 | (string) RAWG game slug                                       |
-| name                 | (string) Name of the game                                     |
-| name_original        | (string) Original name of the game                            |
-| description          | (string) Description of the game (HTML)                       |
-| description_raw      | (string) Description of the game (Text)                       |
-| released             | (string) Release date of the game                             |
-| tba                  | (boolean) Unknown release date flag                           |
-| background_image     | (string) Background image URL                                 |
-| rating               | ([Rating](#rating_object))                                    |
-| rating_top           | (number) Highest rating                                       |
-| ratings              | (array) of [Ratings](#rating_object)                          |
-| ratings_count        | (number) Number of ratings                                    |
-| reviews_text_count   | (string) Number of text reviews                               |
-| metacritic           | (number) Metacritic score                                     |
-| metacritic_platforms | (array) of [MetacriticPlatform](#metacritic_platform_object)) |
-| playtime             | (number) Estimated playtime in hours                          |
-| updated              | (string) Last updated date in RAWG database                   |
-| esrb_rating          | ([ESRB](#esrb_object)) ESRB rating                            |
-| platforms            | (array) of [Platforms](#platform_object)                      |
-| stores               | (array) of [Stores](#store_object)                            |
-| score                | (number)                                                      |
-| tags                 | (array) of [Tags](#tag_object)                                |
-| saturated_color      | (string) Color in hexadecimal format (without `#`)            |
-| dominant_color       | (string) Color in hexadecimal format (without `#`)            |
-| genres               | (array) of [Genres](#genre-object)                            |
-| short_screenshots    | (array) of [ScreenShots](#screenshot-object)                  |
-| website              | (string) URL of game website, if one exists                   |
-| publishers           | (array) of [Publishers](#publisher-object)                    |
-| developers           | (array) of [Developers](#developer-object)                    |
+## Settings Reference
 
-### Developer Object
+| Setting | Description |
+| --- | --- |
+| IGDB Client ID | Twitch Developer app Client ID |
+| IGDB Client Secret | Twitch Developer app Client Secret |
+| New file location | Folder where game notes are created |
+| New file name | Filename format — supports `{{name}}`, `{{release_year}}`, `{{DATE}}`, etc. |
+| Template file | Path to your note template file in the vault |
+| Steam API Key | Steam Web API key for library/wishlist sync |
+| Steam ID | Your Steam user ID |
+| Metadata for owned Steam games | Key/value pairs injected into owned game notes |
+| Metadata for wishlisted Steam games | Key/value pairs injected into wishlisted game notes |
+| Sync on start | Automatically sync Steam library when plugin loads |
+| Sync playtime on start | Update playtime fields for all Steam-linked notes on load |
+| Try match Steam game on creation | When creating a note, attempt to match it to a game in your Steam library |
 
-`{ id: number, name: string, slug: string, games_count: number, image_background: string }`
-
-### Publisher Object
-
-`{ id: number, name: string, slug: string, games_count: number, image_background: string }`
-
-### Metacritic Platform Object
-
-`{ metscore: number, url: string, platform: [Platform](#platform_object) }`
-
-### Rating Object
-
-`{ id: number, title: string, count: number, percent: number }`
-
-### ESRB Object
-
-`{ id: number, name: string, slug: string, name_en: string, name_ru: string }`
-
-### Platform Object
-
-`{ platform: { id: number, name: string, slug: string } }`
-
-### Store Object
-
-`{ id: number, name: string, slug: string }`
-
-### Tag Object
-
-`{ id: number, name: string, slug: string, language: string, games_count: number, image_background: string }`
-
-### Genre Object
-
-`{ id: number, name: string, slug: string }`
-
-### ScreenShot Object
-
-`{ id: number, name: string, slug: string }`

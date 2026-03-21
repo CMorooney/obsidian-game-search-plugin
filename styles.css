@@ -1,29 +1,68 @@
-game-search-plugin__settings .search-input-container {
+igdb-game-searcher__settings .search-input-container {
   width: 100%;
 }
 
-.game-search-plugin__settings--new_file_name {
+.igdb-game-searcher__settings--new_file_name {
   padding-bottom: 0;
   margin-bottom: 0;
 }
-.game-search-plugin__settings--new_file_name_hint {
+.igdb-game-searcher__settings--new_file_name_hint {
   margin-bottom: 20px;
 }
-.game-search-plugin__settings--service_provider .dropdown {
+.igdb-game-searcher__settings--service_provider .dropdown {
   text-transform: capitalize;
 }
 
-.game-search-plugin__hide {
+.igdb-game-searcher__hide {
   display: none;
 }
 
-.game-search-plugin__show {
+.igdb-game-searcher__show {
   display: flex;
 }
 
-.game-search-plugin__search-modal--input {
+.igdb-game-searcher__search-modal--input {
   padding-bottom: 18px;
 }
-.game-search-plugin__search-modal--input input {
+.igdb-game-searcher__search-modal--input input {
   width: 100%;
+}
+
+/* ── Suggest modal ─────────────────────────────────────────────────────────── */
+
+.igdb-game-searcher__suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.igdb-game-searcher__suggest-cover {
+  flex-shrink: 0;
+  width: 54px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.igdb-game-searcher__suggest-cover--placeholder {
+  background-color: var(--background-modifier-border);
+}
+
+.igdb-game-searcher__suggest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.igdb-game-searcher__suggest-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.igdb-game-searcher__suggest-year {
+  color: var(--text-muted);
+  font-size: 0.8em;
 }

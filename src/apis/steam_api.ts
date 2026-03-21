@@ -21,7 +21,7 @@ export class SteamAPI {
       const results = extract(nameQuery, games, { processor: g => g.name, limit: 1, cutoff: 80, returnObjects: true });
       return results?.[0]?.choice ?? null;
     } catch (error) {
-      console.warn('[Game Search][Steam API][tryGetGame]' + error);
+      console.warn('[IGDB Game Searcher][Steam API][tryGetGame]' + error);
       throw error;
     }
   }
@@ -47,7 +47,7 @@ export class SteamAPI {
 
       return results.response.games;
     } catch (error) {
-      console.warn('[Game Search][Steam API][getOwnedGames]' + error);
+      console.warn('[IGDB Game Searcher][Steam API][getOwnedGames]' + error);
       throw error;
     }
   }
@@ -65,7 +65,7 @@ export class SteamAPI {
       }
       return m;
     } catch (error) {
-      console.warn('[Game Search][Steam API][getWishlist]' + error);
+      console.warn('[IGDB Game Searcher][Steam API][getWishlist]' + error);
       throw error;
     }
   }
@@ -110,7 +110,7 @@ export class SteamAPI {
 
       return undefined;
     } catch (error) {
-      console.warn('[Game Search][Steam API][getWishlist]' + error);
+      console.warn('[IGDB Game Searcher][Steam API][getWishlist]' + error);
       throw error;
     }
   }
@@ -148,7 +148,7 @@ export class SteamAPI {
       }
       return matches;
     } catch (error) {
-      console.warn('[Game Search][Steam API][getPlayerAchievementsForGame]' + error);
+      console.warn('[IGDB Game Searcher][Steam API][getPlayerAchievementsForGame]' + error);
       throw error;
     }
   }

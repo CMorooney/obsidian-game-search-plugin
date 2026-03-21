@@ -1,4 +1,4 @@
-import { RAWGGame } from '@models/rawg_game.model';
+import { IGDBGame } from '@models/igdb_game.model';
 import { App, normalizePath, Notice, TFile } from 'obsidian';
 
 export async function getTemplateContents(app: App, templatePath: string | undefined): Promise<string> {
@@ -12,7 +12,10 @@ export async function getTemplateContents(app: App, templatePath: string | undef
     const templateFile = metadataCache.getFirstLinkpathDest(normalizedTemplatePath, '');
     return templateFile ? vault.cachedRead(templateFile) : '';
   } catch (err) {
-    console.error(`[Game Search][Templating] Failed to read the games template '${normalizedTemplatePath}'`, err);
+    console.error(
+      `[IGDB Game Searcher][Templating] Failed to read the games template '${normalizedTemplatePath}'`,
+      err,
+    );
     new Notice('Failed to read the games template');
     return '';
   }
@@ -43,7 +46,7 @@ export function applyTemplateTransformations(rawTemplateContents: string): strin
   );
 }
 
-export function executeInlineScriptsTemplates(game: RAWGGame, text: string) {
+export function executeInlineScriptsTemplates(game: IGDBGame, text: string) {
   const commandRegex = /<%(?:=)(.+)%>/g;
   const ctor = getFunctionConstructor();
   const matchedList = [...text.matchAll(commandRegex)];
@@ -59,7 +62,7 @@ export function executeInlineScriptsTemplates(game: RAWGGame, text: string) {
       )(game);
       return result.replace(matched, outputs);
     } catch (err) {
-      console.warn('[Game Search][Templating] ' + err);
+      console.warn('[IGDB Game Searcher][Templating] ' + err);
     }
     return result;
   }, text);
@@ -69,7 +72,7 @@ export function getFunctionConstructor(): typeof Function {
   try {
     return new Function('return (function(){}).constructor')();
   } catch (err) {
-    console.warn('[Game Search][Templating] ' + err);
+    console.warn('[IGDB Game Searcher][Templating] ' + err);
     if (err instanceof SyntaxError) {
       throw Error('Bad template syntax');
     } else {

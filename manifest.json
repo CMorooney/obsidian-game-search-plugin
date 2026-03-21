@@ -1,9 +1,9 @@
 {
-  "id": "game-search",
-  "name": "Game Search",
+  "id": "igdb-game-searcher",
+  "name": "IGDB Game Searcher",
   "version": "0.2.14",
   "minAppVersion": "0.15.0",
-  "description": "Helps you find games and create notes. Optional Steam Library Sync",
+  "description": "Search for games using IGDB and create notes. Optional Steam Library Sync.",
   "author": "Calvin forked from anpigon",
   "authorUrl": "https://calvins.pizza",
   "isDesktopOnly": false

@@ -1,16 +1,4 @@
-import {
-  RAWGGame,
-  RAWGGameFromSearch,
-  RAWGGenre,
-  RAWGPlatformDetailed,
-  RAWGPublisher,
-  RAWGDeveloper,
-  RAWGMetacriticPlatform,
-  RAWGTag,
-  RAWGStore,
-  RAWGStoreDetailed,
-  releaseYearForRAWGGame,
-} from '@models/rawg_game.model';
+import { IGDBGame, IGDBGameFromSearch, flattenIGDBGame, releaseYearForIGDBGame } from '@models/igdb_game.model';
 
 // == Format Syntax == //
 export const NUMBER_REGEX = /^-?[0-9]*$/;
@@ -21,84 +9,43 @@ export function replaceIllegalFileNameCharactersInString(text: string) {
   return text.replace(/[[\]\\/:?|^#]/g, '').replace(/\s+/g, ' ');
 }
 
-export function makeFileName(game: RAWGGame | RAWGGameFromSearch, fileNameFormat?: string) {
+export function makeFileName(game: IGDBGame | IGDBGameFromSearch, fileNameFormat?: string) {
   let result;
   if (fileNameFormat) {
     result = replaceVariableSyntax(game, replaceDateInString(fileNameFormat));
   } else {
-    result = !game.released ? game.name : `${game.name} (${releaseYearForRAWGGame(game)})`;
+    const year = releaseYearForIGDBGame(game);
+    result = year ? `${game.name} (${year})` : game.name;
   }
   return replaceIllegalFileNameCharactersInString(result) + '.md';
 }
 
-export function changeSnakeCase(game: RAWGGame | RAWGGameFromSearch) {
+export function changeSnakeCase(game: IGDBGame | IGDBGameFromSearch) {
   return Object.entries(game).reduce((acc, [key, value]) => {
     acc[camelToSnakeCase(key)] = value;
     return acc;
   }, {});
 }
 
-export function replaceVariableSyntax(game: RAWGGame | RAWGGameFromSearch, text: string): string {
+export function replaceVariableSyntax(game: IGDBGame | IGDBGameFromSearch, text: string): string {
   if (!text?.trim()) {
     return '';
   }
 
-  if (game.genres) {
-    game.genres.toString = function (this: RAWGGenre[]) {
-      return JSON.stringify(this);
-    };
-  }
+  // Flatten nested IGDB fields into a simple string map for {{variable}} substitution
+  const flatGame = flattenIGDBGame(game as IGDBGame);
 
-  if (game.platforms) {
-    game.platforms.toString = function (this: RAWGPlatformDetailed[]) {
-      return JSON.stringify(this);
-    };
-  }
-
-  if (game.tags) {
-    game.tags.toString = function (this: RAWGTag[]) {
-      return JSON.stringify(this);
-    };
-  }
-
-  if (game.stores) {
-    game.stores.toString = function (this: RAWGStore[]) {
-      return JSON.stringify(this);
-    };
-  }
-
-  const detailedGame = game as RAWGGame;
-  if (detailedGame) {
-    if (detailedGame.developers) {
-      detailedGame.developers.toString = function (this: RAWGDeveloper[]) {
-        return JSON.stringify(this);
-      };
-    }
-    if (detailedGame.publishers) {
-      detailedGame.publishers.toString = function (this: RAWGPublisher[]) {
-        return JSON.stringify(this);
-      };
-    }
-    if (detailedGame.metacritic_platforms) {
-      detailedGame.metacritic_platforms.toString = function (this: RAWGMetacriticPlatform[]) {
-        return JSON.stringify(this);
-      };
-    }
-    if (detailedGame.stores) {
-      game.stores.toString = function (this: RAWGStoreDetailed[]) {
-        return JSON.stringify(this);
-      };
+  // Also include raw top-level scalar fields so advanced templates can reference e.g. {{id}}
+  const combined: Record<string, string> = { ...flatGame };
+  for (const [key, val] of Object.entries(game)) {
+    if (!(key in combined) && typeof val !== 'object') {
+      combined[key] = String(val ?? '');
     }
   }
 
-  const entries = Object.entries(game);
-
-  return entries
-    .reduce((result, [key, val = '']) => {
-      return result.replace(
-        new RegExp(`{{${key}}}`, 'ig'),
-        typeof val === 'object' && val !== null && 'name' in val ? val.name : val,
-      );
+  return Object.entries(combined)
+    .reduce((result, [key, val]) => {
+      return result.replace(new RegExp(`{{${key}}}`, 'ig'), val ?? '');
     }, text)
     .replace(/{{\w+}}/gi, '')
     .trim();
@@ -172,7 +119,7 @@ export function stringToMap(s: string): Map<string, string> {
   if (!s) return m;
   const lines = s.split('\n');
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].contains(':')) {
+    if (lines[i].includes(':')) {
       // Split on the first colon
       const components = lines[i].split(/:(.+)/);
       if (components[0] && components[1] && components[0].trim() && components[1].trim()) {
